@@ -112,14 +112,6 @@
         const eraserTool = document.getElementById('eraserTool');
         const toolIndicator = document.getElementById('toolIndicator');
 
-        // Registro de Service Worker para PWA
-        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
-            window.addEventListener('load', () => {
-                const swPath = window.location.pathname.endsWith('/') ? 'sw.js' : './sw.js';
-                navigator.serviceWorker.register(swPath).catch(() => {});
-            });
-        }
-
         let isDrawing = false;
         let lastX = 0, lastY = 0;
         let currentMode = 'pen';
@@ -198,13 +190,14 @@
                 if (!apiKey || apiKey === "TU_CLAVE_AQUI") throw new Error("API Key no configurada.");
 
                 const imageData = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-                const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                // HEM CANVIAT EL MODEL A gemini-1.5-flash PER EVITAR EL 404
+                const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{
                             parts: [
-                                { text: `Ets un mestre català. Analitza la imatge i compara-la amb: "${original}". Transcriu el que veus, corregeix faltes i dóna consells amables en català.` },
+                                { text: `Ets un mestre català. Analitza la imatge i compara-la amb el text original: "${original}". Transcriu el que veus escrit i corregeix ortografia i gramàtica. Sigues amable i dóna consells per millorar la cal·ligrafia o l'ortografia en català.` },
                                 { inlineData: { mimeType: "image/jpeg", data: imageData } }
                             ]
                         }]
@@ -217,7 +210,7 @@
                 const feedback = data.candidates?.[0]?.content?.parts?.[0]?.text;
                 correctionContent.innerHTML = feedback ? feedback.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>') : "Sense resposta.";
             } catch (err) {
-                correctionContent.innerHTML = `<div class="p-6 bg-red-50 text-red-700 rounded-2xl border border-red-100"><strong>Error de configuració</strong><p class="mt-2 text-sm">${err.message}</p><p class="mt-2 text-xs opacity-60">Recorda posar la teva API Key al fitxer index.html.</p></div>`;
+                correctionContent.innerHTML = `<div class="p-6 bg-red-50 text-red-700 rounded-2xl border border-red-100"><strong>Error en la correcció</strong><p class="mt-2 text-sm">${err.message}</p></div>`;
             }
         };
 
