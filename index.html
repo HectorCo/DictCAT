@@ -15,7 +15,6 @@
     <link rel="apple-touch-icon" href="https://cdn-icons-png.freepik.com/512/3207/3207092.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="manifest" href="manifest.json">
     
     <style>
         body { 
@@ -87,13 +86,13 @@
             </div>
             <div id="correctionContent" class="p-8 overflow-y-auto text-lg leading-relaxed text-slate-700 italic"></div>
             <div class="p-6 border-t bg-slate-50 flex justify-center">
-                <button id="closeModalBtn" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform">Continuar practicant</button>
+                <button id="closeModalBtn" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform">Tornar a escriure</button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        // PEGA AQUÍ TU CLAVE DE GOOGLE AI STUDIO
+        // Posa aquí la teva API Key de Google AI Studio
         const apiKey = "AIzaSyDGR3Q9JNEDjkoEBQwKKTVY_HEYMTmxuwo"; 
         
         const canvas = document.getElementById('canvas');
@@ -184,20 +183,20 @@
             if (!original) { parentPanel.classList.remove('-translate-y-full'); return; }
             
             resultModal.classList.remove('hidden'); resultModal.classList.add('flex');
-            correctionContent.innerHTML = `<div class="flex flex-col items-center py-12 gap-5"><div class="w-14 h-14 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div><p class="font-bold text-blue-600 uppercase">Corregint...</p></div>`;
+            correctionContent.innerHTML = `<div class="flex flex-col items-center py-12 gap-5"><div class="w-14 h-14 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div><p class="font-bold text-blue-600 uppercase tracking-widest">Corregint...</p></div>`;
 
             try {
-                if (!apiKey || apiKey === "TU_CLAVE_AQUI") throw new Error("API Key no configurada.");
+                if (!apiKey || apiKey === "TU_CLAVE_AQUI") throw new Error("API Key no configurada al fitxer index.html");
 
                 const imageData = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-                // HEM CANVIAT EL MODEL A gemini-1.5-flash PER EVITAR EL 404
-                const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{
                             parts: [
-                                { text: `Ets un mestre català. Analitza la imatge i compara-la amb el text original: "${original}". Transcriu el que veus escrit i corregeix ortografia i gramàtica. Sigues amable i dóna consells per millorar la cal·ligrafia o l'ortografia en català.` },
+                                { text: `Actua com un mestre de primària de Catalunya. Analitza la imatge adjunta (escrita a mà) i compara-la amb el text original següent: "${original}". Transcriu el que ha escrit l'alumne, corregeix l'ortografia i la gramàtica, i dona un feedback amable i constructiu en català per millorar.` },
                                 { inlineData: { mimeType: "image/jpeg", data: imageData } }
                             ]
                         }]
@@ -205,25 +204,27 @@
                 });
                 
                 const data = await response.json();
-                if (data.error) throw new Error(`${data.error.code}: ${data.error.message}`);
+                
+                if (data.error) {
+                    throw new Error(`${data.error.code}: ${data.error.message}`);
+                }
                 
                 const feedback = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                correctionContent.innerHTML = feedback ? feedback.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>') : "Sense resposta.";
+                if (!feedback) throw new Error("L'API no ha retornat cap resposta.");
+                
+                correctionContent.innerHTML = feedback
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-700 font-bold">$1</strong>')
+                    .replace(/\n/g, '<br>');
+                    
             } catch (err) {
-                correctionContent.innerHTML = `<div class="p-6 bg-red-50 text-red-700 rounded-2xl border border-red-100"><strong>Error en la correcció</strong><p class="mt-2 text-sm">${err.message}</p></div>`;
+                correctionContent.innerHTML = `
+                    <div class="p-6 bg-red-50 text-red-700 rounded-2xl border border-red-200">
+                        <h3 class="font-bold text-lg mb-2">Ups! Ha hagut un problema</h3>
+                        <p class="text-sm">${err.message}</p>
+                        <p class="mt-4 text-xs italic opacity-70">Assegura't de tenir connexió a internet i que la teva API KEY sigui correcta.</p>
+                    </div>`;
             }
         };
-
-        async function fetchWithRetry(url, opts, retries = 3) {
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const res = await fetch(url, opts);
-                    if (res.ok) return res;
-                    if (res.status !== 429 || i === retries - 1) return res;
-                    await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
-                } catch (e) { if (i === retries - 1) throw e; }
-            }
-        }
 
         [closeModal, closeModalBtn].forEach(b => b.onclick = () => { resultModal.classList.add('hidden'); resultModal.classList.remove('flex'); });
     </script>
