@@ -5,18 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DICTCAT - S-Pen Dictats</title>
     
-    <!-- Configuración para PWA e instalación en tablets Samsung/Android -->
     <meta name="theme-color" content="#2563eb">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="DICTCAT">
     
-    <!-- Iconos de la aplicación -->
     <link rel="icon" type="image/png" href="https://cdn-icons-png.freepik.com/512/3207/3207092.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.freepik.com/512/3207/3207092.png">
 
-    <!-- Frameworks y Manifiesto -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="manifest" href="manifest.json">
     
@@ -45,7 +42,6 @@
 </head>
 <body class="bg-slate-100 font-sans">
 
-    <!-- Cabecera de la App -->
     <header class="bg-blue-600 text-white p-3 flex justify-between items-center shadow-lg z-20">
         <div class="flex items-center gap-2">
             <button id="setupBtn" class="p-2 hover:bg-blue-700 rounded-full toolbar-btn" title="Configuració">
@@ -68,7 +64,6 @@
         </div>
     </header>
 
-    <!-- Panel de Configuración (Para el padre) -->
     <div id="parentPanel" class="fixed inset-x-0 top-0 bg-slate-800 text-white p-6 transform -translate-y-full z-30 shadow-2xl transition-transform duration-300 border-b border-blue-500/30">
         <div class="max-w-2xl mx-auto">
             <h2 class="text-lg font-bold mb-3 flex items-center gap-2 italic text-blue-300">Text del Dictat (Pare/Mestre)</h2>
@@ -79,22 +74,18 @@
         </div>
     </div>
 
-    <!-- Área de dibujo (Canvas) -->
     <main class="flex-1 relative overflow-hidden bg-white">
         <canvas id="canvas" class="w-full h-full"></canvas>
         <div id="toolIndicator" class="absolute bottom-4 right-4 pointer-events-none bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold text-slate-600 border border-slate-200 uppercase shadow-lg">Mode: Llapis</div>
     </main>
 
-    <!-- Modal de Resultados con IA -->
     <div id="resultModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden scale-in">
             <div class="p-5 bg-blue-600 text-white flex justify-between items-center">
                 <h2 class="text-xl font-black uppercase tracking-tight">Correcció del Dictat</h2>
                 <button id="closeModal" class="text-white/80 hover:text-white text-3xl font-light leading-none">&times;</button>
             </div>
-            <div id="correctionContent" class="p-8 overflow-y-auto text-lg leading-relaxed text-slate-700 italic">
-                <!-- El contenido de la IA se inserta aquí -->
-            </div>
+            <div id="correctionContent" class="p-8 overflow-y-auto text-lg leading-relaxed text-slate-700 italic"></div>
             <div class="p-6 border-t bg-slate-50 flex justify-center">
                 <button id="closeModalBtn" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform">Continuar practicant</button>
             </div>
@@ -102,9 +93,11 @@
     </div>
 
     <script type="module">
-        const apiKey = ""; // Se inyecta automáticamente
+        // PEGA AQUÍ TU CLAVE DE GOOGLE AI STUDIO
+        const apiKey = "AIzaSyDGR3Q9JNEDjkoEBQwKKTVY_HEYMTmxuwo"; 
+        
         const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { alpha: false });
         const setupBtn = document.getElementById('setupBtn');
         const parentPanel = document.getElementById('parentPanel');
         const closeParentBtn = document.getElementById('closeParentBtn');
@@ -119,24 +112,11 @@
         const eraserTool = document.getElementById('eraserTool');
         const toolIndicator = document.getElementById('toolIndicator');
 
-        // --- Registro del Service Worker (Optimizado para GitHub Pages) ---
-        if ('serviceWorker' in navigator) {
+        // Registro de Service Worker para PWA
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
             window.addEventListener('load', () => {
-                // Usamos una ruta relativa que funcione tanto en local como en subdirectorios de GitHub
-                const swPath = window.location.pathname.endsWith('/') 
-                    ? 'sw.js' 
-                    : './sw.js';
-
-                if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
-                    navigator.serviceWorker.register(swPath)
-                        .then(reg => console.log("PWA: Service Worker actiu", reg.scope))
-                        .catch(err => {
-                            // Solo mostramos error si no es el entorno de previsualización de Gemini
-                            if (!window.location.host.includes('usercontent.goog')) {
-                                console.warn("PWA: No se pudo registrar el SW (normal en entornos de prueba)", err);
-                            }
-                        });
-                }
+                const swPath = window.location.pathname.endsWith('/') ? 'sw.js' : './sw.js';
+                navigator.serviceWorker.register(swPath).catch(() => {});
             });
         }
 
@@ -151,6 +131,8 @@
             const img = new Image();
             img.src = tempImg;
             img.onload = () => {
+                ctx.fillStyle = "white";
+                ctx.fillRect(0,0,canvas.width, canvas.height);
                 ctx.drawImage(img, 0, 0);
                 updateToolStyles();
             };
@@ -165,8 +147,9 @@
                 ctx.strokeStyle = '#334155';
                 toolIndicator.innerText = "Mode: Llapis";
             } else {
-                ctx.globalCompositeOperation = 'destination-out';
+                ctx.globalCompositeOperation = 'source-over';
                 ctx.lineWidth = 50;
+                ctx.strokeStyle = '#ffffff';
                 toolIndicator.innerText = "Mode: Goma";
             }
         }
@@ -181,23 +164,14 @@
             return { x: clientX - rect.left, y: clientY - rect.top };
         }
 
-        const onStart = (e) => { 
-            isDrawing = true; 
-            const p = getPos(e); 
-            [lastX, lastY] = [p.x, p.y]; 
-        };
-
+        const onStart = (e) => { isDrawing = true; const p = getPos(e); [lastX, lastY] = [p.x, p.y]; };
         const onMove = (e) => {
             if (!isDrawing) return;
             if (e.cancelable) e.preventDefault(); 
             const p = getPos(e);
-            ctx.beginPath(); 
-            ctx.moveTo(lastX, lastY); 
-            ctx.lineTo(p.x, p.y); 
-            ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke();
             [lastX, lastY] = [p.x, p.y];
         };
-
         const onEnd = () => isDrawing = false;
 
         canvas.addEventListener('mousedown', onStart);
@@ -207,61 +181,30 @@
         canvas.addEventListener('touchmove', onMove, {passive:false});
         window.addEventListener('touchend', onEnd);
 
-        penTool.onclick = () => { 
-            currentMode = 'pen'; 
-            penTool.classList.add('active-tool'); 
-            eraserTool.classList.remove('active-tool'); 
-            updateToolStyles(); 
-        };
-        eraserTool.onclick = () => { 
-            currentMode = 'eraser'; 
-            eraserTool.classList.add('active-tool'); 
-            penTool.classList.remove('active-tool'); 
-            updateToolStyles(); 
-        };
+        penTool.onclick = () => { currentMode = 'pen'; updateToolStyles(); penTool.classList.add('active-tool'); eraserTool.classList.remove('active-tool'); };
+        eraserTool.onclick = () => { currentMode = 'eraser'; updateToolStyles(); eraserTool.classList.add('active-tool'); penTool.classList.remove('active-tool'); };
         setupBtn.onclick = () => parentPanel.classList.toggle('-translate-y-full');
         closeParentBtn.onclick = () => parentPanel.classList.add('-translate-y-full');
-        clearBtn.onclick = () => { 
-            if(confirm("Vols esborrar tota la pissarra per començar de nou?")) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-        };
+        clearBtn.onclick = () => { if(confirm("Netejar pantalla?")) { ctx.fillStyle="white"; ctx.fillRect(0,0,canvas.width, canvas.height); } };
 
         correctBtn.onclick = async () => {
             const original = originalText.value.trim();
-            if (!original) { 
-                parentPanel.classList.remove('-translate-y-full'); 
-                return; 
-            }
+            if (!original) { parentPanel.classList.remove('-translate-y-full'); return; }
             
-            resultModal.classList.remove('hidden'); 
-            resultModal.classList.add('flex');
-            correctionContent.innerHTML = `
-                <div class="flex flex-col items-center py-12 gap-5 text-slate-500">
-                    <div class="w-14 h-14 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p class="font-bold text-blue-600 animate-pulse uppercase tracking-wider">El mestre està corregint...</p>
-                </div>`;
+            resultModal.classList.remove('hidden'); resultModal.classList.add('flex');
+            correctionContent.innerHTML = `<div class="flex flex-col items-center py-12 gap-5"><div class="w-14 h-14 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div><p class="font-bold text-blue-600 uppercase">Corregint...</p></div>`;
 
             try {
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
-                const tCtx = tempCanvas.getContext('2d');
-                tCtx.fillStyle = "#ffffff"; 
-                tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                tCtx.drawImage(canvas, 0, 0);
-                const imageData = tempCanvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+                if (!apiKey || apiKey === "TU_CLAVE_AQUI") throw new Error("API Key no configurada.");
 
+                const imageData = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
                 const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{
                             parts: [
-                                { text: `Ets un mestre de primària català. Analitza l'escriptura a mà de la imatge i compara-la amb el text esperat: "${original}". 
-                                1. Transcriu el que veus escrit.
-                                2. Indica quines faltes d'ortografia o de puntuació hi ha.
-                                3. Dóna un consell pedagògic amable.
-                                Usa negretes per ressaltar correccions. Respon sempre en català.` },
+                                { text: `Ets un mestre català. Analitza la imatge i compara-la amb: "${original}". Transcriu el que veus, corregeix faltes i dóna consells amables en català.` },
                                 { inlineData: { mimeType: "image/jpeg", data: imageData } }
                             ]
                         }]
@@ -269,37 +212,27 @@
                 });
                 
                 const data = await response.json();
-                if (data.error) throw new Error(data.error.message);
+                if (data.error) throw new Error(`${data.error.code}: ${data.error.message}`);
                 
                 const feedback = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                correctionContent.innerHTML = feedback 
-                    ? feedback.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>') 
-                    : "S'ha produït un error en analitzar el text.";
+                correctionContent.innerHTML = feedback ? feedback.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>') : "Sense resposta.";
             } catch (err) {
-                correctionContent.innerHTML = `
-                    <div class="p-6 bg-red-50 text-red-700 rounded-2xl border border-red-100">
-                        <strong class="block mb-2 text-xl">Ups! Hi ha hagut un problema</strong>
-                        <p>${err.message}</p>
-                        <p class="mt-4 text-sm opacity-70">Assegura't de tenir connexió a internet.</p>
-                    </div>`;
+                correctionContent.innerHTML = `<div class="p-6 bg-red-50 text-red-700 rounded-2xl border border-red-100"><strong>Error de configuració</strong><p class="mt-2 text-sm">${err.message}</p><p class="mt-2 text-xs opacity-60">Recorda posar la teva API Key al fitxer index.html.</p></div>`;
             }
         };
 
-        async function fetchWithRetry(url, opts, retries = 5) {
+        async function fetchWithRetry(url, opts, retries = 3) {
             for (let i = 0; i < retries; i++) {
                 try {
                     const res = await fetch(url, opts);
                     if (res.ok) return res;
-                    if (res.status === 429) await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
-                    else throw new Error("Error en el servidor: " + res.status);
+                    if (res.status !== 429 || i === retries - 1) return res;
+                    await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
                 } catch (e) { if (i === retries - 1) throw e; }
             }
         }
 
-        [closeModal, closeModalBtn].forEach(b => b.onclick = () => { 
-            resultModal.classList.add('hidden'); 
-            resultModal.classList.remove('flex'); 
-        });
+        [closeModal, closeModalBtn].forEach(b => b.onclick = () => { resultModal.classList.add('hidden'); resultModal.classList.remove('flex'); });
     </script>
 </body>
 </html>
