@@ -12,6 +12,8 @@
         .toolbar-btn { transition: all 0.1s; }
         .toolbar-btn:active { transform: scale(0.9); }
         .active-tool { background-color: rgba(255, 255, 255, 0.4) !important; ring: 2px solid white; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .scale-in { animation: fadeIn 0.2s ease-out forwards; }
     </style>
 </head>
 <body class="bg-slate-100 font-sans">
@@ -22,11 +24,10 @@
             <button id="setupBtn" class="p-2 hover:bg-blue-700 rounded-full toolbar-btn" title="Configurar Dictat">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
-            <h1 class="text-xl font-black tracking-tight">DICTCAT</h1>
+            <h1 class="text-xl font-black tracking-tight uppercase">DICTCAT</h1>
         </div>
         
         <div class="flex gap-2 items-center">
-            <!-- Herramientas de dibujo -->
             <div class="flex bg-blue-800/40 rounded-full p-1 mr-2">
                 <button id="penTool" class="p-2 rounded-full toolbar-btn active-tool" title="Llapis">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
@@ -36,45 +37,45 @@
                 </button>
             </div>
             
-            <button id="clearBtn" class="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full text-xs font-bold toolbar-btn uppercase">Netejar tot</button>
+            <button id="clearBtn" class="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full text-xs font-bold toolbar-btn uppercase">Netejar</button>
             <button id="correctBtn" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-5 py-1.5 rounded-full text-sm font-black shadow-md toolbar-btn uppercase ml-1">Corregir</button>
         </div>
     </header>
 
-    <!-- Panel "Secret" para el Padre -->
+    <!-- Panel Secreto -->
     <div id="parentPanel" class="fixed inset-x-0 top-0 bg-slate-800 text-white p-6 transform -translate-y-full z-10 shadow-2xl transition-transform duration-300">
         <div class="max-w-2xl mx-auto">
             <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Text del Dictat (Secret)
+                Text del Dictat (Pare)
             </h2>
-            <textarea id="originalText" class="w-full p-4 bg-slate-700 border-none rounded-xl text-lg h-32 focus:ring-2 focus:ring-yellow-400 outline-none text-white" placeholder="Escriu aquí el que dictaràs..."></textarea>
+            <textarea id="originalText" class="w-full p-4 bg-slate-700 border-none rounded-xl text-lg h-32 focus:ring-2 focus:ring-yellow-400 outline-none text-white" placeholder="Escriu aquí el dictat..."></textarea>
             <div class="mt-4 flex justify-end">
-                <button id="closeParentBtn" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-bold">Guardar i Començar</button>
+                <button id="closeParentBtn" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-bold">Començar Dictat</button>
             </div>
         </div>
     </div>
 
-    <!-- Canvas (Lienzo) de escritura -->
+    <!-- Lienzo -->
     <main class="flex-1 relative overflow-hidden bg-white">
         <canvas id="canvas" class="w-full h-full"></canvas>
-        <div id="toolIndicator" class="absolute bottom-4 right-4 pointer-events-none bg-slate-800/10 px-4 py-2 rounded-full text-sm font-bold text-slate-400 border border-slate-200">
+        <div id="toolIndicator" class="absolute bottom-4 right-4 pointer-events-none bg-slate-100 px-3 py-1 rounded-full text-xs font-bold text-slate-400 border border-slate-200 uppercase">
             Mode: Llapis
         </div>
     </main>
 
-    <!-- Modal de Resultados -->
+    <!-- Modal Resultados -->
     <div id="resultModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden scale-in">
-            <div class="p-6 bg-blue-600 text-white flex justify-between items-center">
-                <h2 class="text-2xl font-black">Resultat</h2>
-                <button id="closeModal" class="text-white/80 hover:text-white text-3xl">&times;</button>
+            <div class="p-5 bg-blue-600 text-white flex justify-between items-center">
+                <h2 class="text-xl font-black uppercase tracking-tight">Correcció</h2>
+                <button id="closeModal" class="text-white/80 hover:text-white text-2xl">&times;</button>
             </div>
-            <div id="correctionContent" class="p-8 overflow-y-auto text-lg leading-relaxed text-slate-700 italic">
-                <!-- Feedback IA -->
+            <div id="correctionContent" class="p-8 overflow-y-auto text-lg leading-relaxed text-slate-700">
+                <!-- Feedback -->
             </div>
             <div class="p-6 border-t bg-slate-50 flex justify-center">
-                <button id="closeModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-2xl font-black text-xl shadow-lg toolbar-btn">TORNAR A ESCRIURE</button>
+                <button id="closeModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-black shadow-lg toolbar-btn uppercase tracking-wide">Tornar</button>
             </div>
         </div>
     </div>
@@ -99,15 +100,19 @@
         const toolIndicator = document.getElementById('toolIndicator');
 
         let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
-        let currentMode = 'pen'; // 'pen' o 'eraser'
+        let lastX = 0, lastY = 0;
+        let currentMode = 'pen';
 
-        // --- Configuración Canvas ---
         function resizeCanvas() {
             const rect = canvas.parentElement.getBoundingClientRect();
+            // Guardar contenido actual
+            const tempImg = canvas.toDataURL();
             canvas.width = rect.width;
             canvas.height = rect.height;
+            // Restaurar contenido si existía
+            const img = new Image();
+            img.src = tempImg;
+            img.onload = () => ctx.drawImage(img, 0, 0);
             updateToolStyles();
         }
 
@@ -120,9 +125,8 @@
                 ctx.strokeStyle = '#334155';
                 toolIndicator.innerText = "Mode: Llapis";
             } else {
-                // Modo goma: "borra" lo que hay debajo
                 ctx.globalCompositeOperation = 'destination-out';
-                ctx.lineWidth = 30; // Más grueso para borrar fácil
+                ctx.lineWidth = 35;
                 toolIndicator.innerText = "Mode: Goma";
             }
         }
@@ -130,160 +134,101 @@
         window.addEventListener('load', resizeCanvas);
         window.addEventListener('resize', resizeCanvas);
 
-        // --- Lógica de Dibujo ---
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+            const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
             return { x: clientX - rect.left, y: clientY - rect.top };
         }
 
-        function start(e) {
-            isDrawing = true;
-            const { x, y } = getPos(e);
-            [lastX, lastY] = [x, y];
-        }
-
-        function draw(e) {
+        canvas.addEventListener('mousedown', (e) => { isDrawing = true; const p = getPos(e); [lastX, lastY] = [p.x, p.y]; });
+        canvas.addEventListener('mousemove', (e) => {
             if (!isDrawing) return;
-            if (e.cancelable) e.preventDefault();
-            const { x, y } = getPos(e);
-            
+            const p = getPos(e);
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
+            ctx.lineTo(p.x, p.y);
             ctx.stroke();
-            
-            [lastX, lastY] = [x, y];
-        }
-
-        function stop() { isDrawing = false; }
-
-        canvas.addEventListener('mousedown', start);
-        canvas.addEventListener('mousemove', draw);
-        window.addEventListener('mouseup', stop);
-
-        canvas.addEventListener('touchstart', start, { passive: false });
-        canvas.addEventListener('touchmove', draw, { passive: false });
-        window.addEventListener('touchend', stop);
-
-        // --- Herramientas ---
-        penTool.addEventListener('click', () => {
-            currentMode = 'pen';
-            penTool.classList.add('active-tool');
-            eraserTool.classList.remove('active-tool');
-            updateToolStyles();
+            [lastX, lastY] = [p.x, p.y];
         });
+        window.addEventListener('mouseup', () => isDrawing = false);
 
-        eraserTool.addEventListener('click', () => {
-            currentMode = 'eraser';
-            eraserTool.classList.add('active-tool');
-            penTool.classList.remove('active-tool');
-            updateToolStyles();
-        });
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; const p = getPos(e); [lastX, lastY] = [p.x, p.y]; }, {passive:false});
+        canvas.addEventListener('touchmove', (e) => {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const p = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+            [lastX, lastY] = [p.x, p.y];
+        }, {passive:false});
+        window.addEventListener('touchend', () => isDrawing = false);
 
-        setupBtn.addEventListener('click', () => {
-            parentPanel.classList.toggle('-translate-y-full');
-            parentPanel.classList.toggle('translate-y-0');
-        });
+        penTool.addEventListener('click', () => { currentMode = 'pen'; penTool.classList.add('active-tool'); eraserTool.classList.remove('active-tool'); updateToolStyles(); });
+        eraserTool.addEventListener('click', () => { currentMode = 'eraser'; eraserTool.classList.add('active-tool'); penTool.classList.remove('active-tool'); updateToolStyles(); });
+        setupBtn.addEventListener('click', () => { parentPanel.classList.toggle('-translate-y-full'); });
+        closeParentBtn.addEventListener('click', () => { parentPanel.classList.add('-translate-y-full'); });
+        clearBtn.addEventListener('click', () => { if(confirm("Vols esborrar tot?")) ctx.clearRect(0, 0, canvas.width, canvas.height); });
 
-        closeParentBtn.addEventListener('click', () => {
-            parentPanel.classList.add('-translate-y-full');
-            parentPanel.classList.remove('translate-y-0');
-        });
-
-        clearBtn.addEventListener('click', () => {
-            if(confirm("Vols esborrar tot el dibuix?")) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-        });
-
-        // --- Corrección con IA ---
         correctBtn.addEventListener('click', async () => {
-            const textToCompare = originalText.value.trim();
-            if (!textToCompare) {
-                parentPanel.classList.remove('-translate-y-full');
-                parentPanel.classList.add('translate-y-0');
-                return;
-            }
+            const original = originalText.value.trim();
+            if (!original) { parentPanel.classList.remove('-translate-y-full'); return; }
 
             resultModal.classList.remove('hidden');
             resultModal.classList.add('flex');
-            correctionContent.innerHTML = `
-                <div class="flex flex-col items-center gap-6 py-12">
-                    <div class="w-16 h-16 border-8 border-blue-600 border-t-yellow-400 rounded-full animate-spin"></div>
-                    <p class="text-xl font-bold text-slate-600 animate-pulse">Corregint el dictat...</p>
-                </div>
-            `;
+            correctionContent.innerHTML = `<div class="flex flex-col items-center py-10 gap-4"><div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div><p class="font-bold text-slate-500">Analitzant dictat...</p></div>`;
 
             try {
-                // Creamos una copia del canvas para la IA (porque el original puede tener fondo transparente o lineas de guía)
+                // Crear imagen optimizada para la IA
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = canvas.width;
                 tempCanvas.height = canvas.height;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.fillStyle = "white";
-                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                tempCtx.drawImage(canvas, 0, 0);
+                const tCtx = tempCanvas.getContext('2d');
+                tCtx.fillStyle = "#ffffff";
+                tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tCtx.drawImage(canvas, 0, 0);
                 
-                const imageData = tempCanvas.toDataURL('image/png').split(',')[1];
-                
+                const imageData = tempCanvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+
                 const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{
                             parts: [
-                                { text: `Ets un mestre de català amable. Analitza la imatge de l'escriptura a mà i compara-la amb el text original: "${textToCompare}". 
-                                         Instruccions:
-                                         1. Transcriu el que ha escrit l'alumne.
-                                         2. Compara-ho paraula per paraula.
-                                         3. Explica els errors d'ortografia o accentuació amb afecte.
-                                         4. Posa una nota motivadora.
-                                         Respon en català, usant negretes per ressaltar correccions.` },
-                                { inlineData: { mimeType: "image/png", data: imageData } }
+                                { text: `Compara l'escriptura de la imatge amb el text original: "${original}". Transcriu el que veus, corregeix les faltes en català i dóna un consell positiu. Usa negretes.` },
+                                { inlineData: { mimeType: "image/jpeg", data: imageData } }
                             ]
                         }]
                     })
                 });
 
                 const data = await response.json();
+                if (data.error) throw new Error(data.error.message || "Error d'API");
+                
                 const feedback = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                if (feedback) {
-                    correctionContent.innerHTML = formatFeedback(feedback);
-                } else {
-                    throw new Error("No he pogut llegir l'escriptura.");
-                }
-
-            } catch (error) {
-                correctionContent.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+                correctionContent.innerHTML = feedback ? formatMarkdown(feedback) : "No s'ha pogut generar la correcció.";
+            } catch (err) {
+                correctionContent.innerHTML = `<div class="text-red-600 font-bold p-4 bg-red-50 rounded-xl">Error: ${err.message}<br><small class="font-normal opacity-70">Torna-ho a provar en un moment.</small></div>`;
             }
         });
 
         async function fetchWithRetry(url, options, retries = 5) {
             for (let i = 0; i < retries; i++) {
                 try {
-                    const response = await fetch(url, options);
-                    if (response.ok) return response;
-                    if (response.status !== 429) throw new Error("Error API");
+                    const res = await fetch(url, options);
+                    if (res.ok) return res;
+                    if (res.status === 429) await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
+                    else throw new Error("Error de connexió " + res.status);
                 } catch (e) { if (i === retries - 1) throw e; }
-                await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
             }
         }
 
-        function formatFeedback(text) {
-            return text
-                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-800">$1</strong>')
-                .replace(/\n/g, '<br>');
-        }
+        function formatMarkdown(t) { return t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>'); }
+        [closeModal, closeModalBtn].forEach(b => b.onclick = () => { resultModal.classList.add('hidden'); resultModal.classList.remove('flex'); });
 
-        [closeModal, closeModalBtn].forEach(btn => {
-            btn.addEventListener('click', () => {
-                resultModal.classList.add('hidden');
-                resultModal.classList.remove('flex');
-            });
-        });
     </script>
 </body>
 </html>
