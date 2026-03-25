@@ -4,11 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DICTCAT - S-Pen Dictats</title>
+    
+    <!-- Configuración para PWA e instalación en tablets Samsung/Android -->
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DICTCAT">
+    
+    <!-- Iconos de la aplicación -->
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.freepik.com/512/3207/3207092.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.freepik.com/512/3207/3207092.png">
+
+    <!-- Frameworks y Manifiesto -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="manifest" href="data:application/json;base64,ewogICJnameiOiAiRElDVENBVCIsCiAgInNob3J0X25hbWUiOiAiRElDVENBVCIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvcjogIiNmZmZmZmYiLAogICJ0aGVtZV9jb2xvciI6ICIjMjU2M2ViIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZyZWVwaWsuY29tLzUxMi8zMjA3LzMyMDcwOTIucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXQp9">
+    <link rel="manifest" href="manifest.json">
+    
     <style>
-        body { touch-action: none; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
-        #canvas { touch-action: none; background-image: linear-gradient(#e5e7eb 1px, transparent 1px); background-size: 100% 2.5rem; background-color: #fff; cursor: crosshair; }
+        body { 
+            touch-action: none; 
+            overflow: hidden; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        #canvas { 
+            touch-action: none; 
+            background-image: linear-gradient(#e5e7eb 1px, transparent 1px); 
+            background-size: 100% 2.5rem; 
+            background-color: #fff; 
+            cursor: crosshair; 
+        }
         .toolbar-btn { transition: all 0.1s; }
         .toolbar-btn:active { transform: scale(0.9); }
         .active-tool { background-color: rgba(255, 255, 255, 0.4) !important; ring: 2px solid white; }
@@ -18,10 +45,10 @@
 </head>
 <body class="bg-slate-100 font-sans">
 
-    <!-- Header Principal -->
+    <!-- Cabecera de la App -->
     <header class="bg-blue-600 text-white p-3 flex justify-between items-center shadow-lg z-20">
         <div class="flex items-center gap-2">
-            <button id="setupBtn" class="p-2 hover:bg-blue-700 rounded-full toolbar-btn" title="Configurar Dictat">
+            <button id="setupBtn" class="p-2 hover:bg-blue-700 rounded-full toolbar-btn" title="Configuració">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
             <h1 class="text-xl font-black tracking-tight uppercase">DICTCAT</h1>
@@ -29,59 +56,53 @@
         
         <div class="flex gap-2 items-center">
             <div class="flex bg-blue-800/40 rounded-full p-1 mr-2">
-                <button id="penTool" class="p-2 rounded-full toolbar-btn active-tool" title="Llapis">
+                <button id="penTool" class="p-2 rounded-full toolbar-btn active-tool">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
                 </button>
-                <button id="eraserTool" class="p-2 rounded-full toolbar-btn" title="Goma">
+                <button id="eraserTool" class="p-2 rounded-full toolbar-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21Z"/><path d="m22 21-14 0"/><path d="m18 11-4-4"/></svg>
                 </button>
             </div>
-            
-            <button id="clearBtn" class="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full text-xs font-bold toolbar-btn uppercase">Netejar</button>
-            <button id="correctBtn" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-5 py-1.5 rounded-full text-sm font-black shadow-md toolbar-btn uppercase ml-1">Corregir</button>
+            <button id="clearBtn" class="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full text-xs font-bold uppercase">Netejar</button>
+            <button id="correctBtn" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-5 py-1.5 rounded-full text-sm font-black shadow-md uppercase ml-1 transition-all active:scale-95">Corregir</button>
         </div>
     </header>
 
-    <!-- Panel Secreto -->
-    <div id="parentPanel" class="fixed inset-x-0 top-0 bg-slate-800 text-white p-6 transform -translate-y-full z-10 shadow-2xl transition-transform duration-300">
+    <!-- Panel de Configuración (Para el padre) -->
+    <div id="parentPanel" class="fixed inset-x-0 top-0 bg-slate-800 text-white p-6 transform -translate-y-full z-30 shadow-2xl transition-transform duration-300 border-b border-blue-500/30">
         <div class="max-w-2xl mx-auto">
-            <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Text del Dictat (Pare)
-            </h2>
-            <textarea id="originalText" class="w-full p-4 bg-slate-700 border-none rounded-xl text-lg h-32 focus:ring-2 focus:ring-yellow-400 outline-none text-white" placeholder="Escriu aquí el dictat..."></textarea>
+            <h2 class="text-lg font-bold mb-3 flex items-center gap-2 italic text-blue-300">Text del Dictat (Pare/Mestre)</h2>
+            <textarea id="originalText" class="w-full p-4 bg-slate-700 border-none rounded-xl text-lg h-32 text-white outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400" placeholder="Escriu aquí el text que dictaràs..."></textarea>
             <div class="mt-4 flex justify-end">
-                <button id="closeParentBtn" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-bold">Començar Dictat</button>
+                <button id="closeParentBtn" class="bg-blue-600 px-8 py-2 rounded-lg font-bold shadow-lg hover:bg-blue-500 transition-colors">Guardar i Començar</button>
             </div>
         </div>
     </div>
 
-    <!-- Lienzo -->
+    <!-- Área de dibujo (Canvas) -->
     <main class="flex-1 relative overflow-hidden bg-white">
         <canvas id="canvas" class="w-full h-full"></canvas>
-        <div id="toolIndicator" class="absolute bottom-4 right-4 pointer-events-none bg-slate-100 px-3 py-1 rounded-full text-xs font-bold text-slate-400 border border-slate-200 uppercase">
-            Mode: Llapis
-        </div>
+        <div id="toolIndicator" class="absolute bottom-4 right-4 pointer-events-none bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold text-slate-600 border border-slate-200 uppercase shadow-lg">Mode: Llapis</div>
     </main>
 
-    <!-- Modal Resultados -->
+    <!-- Modal de Resultados con IA -->
     <div id="resultModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden scale-in">
             <div class="p-5 bg-blue-600 text-white flex justify-between items-center">
-                <h2 class="text-xl font-black uppercase tracking-tight">Correcció</h2>
-                <button id="closeModal" class="text-white/80 hover:text-white text-2xl">&times;</button>
+                <h2 class="text-xl font-black uppercase tracking-tight">Correcció del Dictat</h2>
+                <button id="closeModal" class="text-white/80 hover:text-white text-3xl font-light leading-none">&times;</button>
             </div>
-            <div id="correctionContent" class="p-8 overflow-y-auto text-lg leading-relaxed text-slate-700">
-                <!-- Feedback -->
+            <div id="correctionContent" class="p-8 overflow-y-auto text-lg leading-relaxed text-slate-700 italic">
+                <!-- El contenido de la IA se inserta aquí -->
             </div>
             <div class="p-6 border-t bg-slate-50 flex justify-center">
-                <button id="closeModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-black shadow-lg toolbar-btn uppercase tracking-wide">Tornar</button>
+                <button id="closeModalBtn" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform">Continuar practicant</button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        const apiKey = ""; 
+        const apiKey = ""; // Se inyecta automáticamente
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const setupBtn = document.getElementById('setupBtn');
@@ -94,26 +115,45 @@
         const correctionContent = document.getElementById('correctionContent');
         const closeModal = document.getElementById('closeModal');
         const closeModalBtn = document.getElementById('closeModalBtn');
-        
         const penTool = document.getElementById('penTool');
         const eraserTool = document.getElementById('eraserTool');
         const toolIndicator = document.getElementById('toolIndicator');
+
+        // --- Registro del Service Worker (Optimizado para GitHub Pages) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Usamos una ruta relativa que funcione tanto en local como en subdirectorios de GitHub
+                const swPath = window.location.pathname.endsWith('/') 
+                    ? 'sw.js' 
+                    : './sw.js';
+
+                if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
+                    navigator.serviceWorker.register(swPath)
+                        .then(reg => console.log("PWA: Service Worker actiu", reg.scope))
+                        .catch(err => {
+                            // Solo mostramos error si no es el entorno de previsualización de Gemini
+                            if (!window.location.host.includes('usercontent.goog')) {
+                                console.warn("PWA: No se pudo registrar el SW (normal en entornos de prueba)", err);
+                            }
+                        });
+                }
+            });
+        }
 
         let isDrawing = false;
         let lastX = 0, lastY = 0;
         let currentMode = 'pen';
 
         function resizeCanvas() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            // Guardar contenido actual
             const tempImg = canvas.toDataURL();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-            // Restaurar contenido si existía
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
             const img = new Image();
             img.src = tempImg;
-            img.onload = () => ctx.drawImage(img, 0, 0);
-            updateToolStyles();
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0);
+                updateToolStyles();
+            };
         }
 
         function updateToolStyles() {
@@ -126,7 +166,7 @@
                 toolIndicator.innerText = "Mode: Llapis";
             } else {
                 ctx.globalCompositeOperation = 'destination-out';
-                ctx.lineWidth = 35;
+                ctx.lineWidth = 50;
                 toolIndicator.innerText = "Mode: Goma";
             }
         }
@@ -141,55 +181,74 @@
             return { x: clientX - rect.left, y: clientY - rect.top };
         }
 
-        canvas.addEventListener('mousedown', (e) => { isDrawing = true; const p = getPos(e); [lastX, lastY] = [p.x, p.y]; });
-        canvas.addEventListener('mousemove', (e) => {
+        const onStart = (e) => { 
+            isDrawing = true; 
+            const p = getPos(e); 
+            [lastX, lastY] = [p.x, p.y]; 
+        };
+
+        const onMove = (e) => {
             if (!isDrawing) return;
+            if (e.cancelable) e.preventDefault(); 
             const p = getPos(e);
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(p.x, p.y);
+            ctx.beginPath(); 
+            ctx.moveTo(lastX, lastY); 
+            ctx.lineTo(p.x, p.y); 
             ctx.stroke();
             [lastX, lastY] = [p.x, p.y];
-        });
-        window.addEventListener('mouseup', () => isDrawing = false);
+        };
 
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; const p = getPos(e); [lastX, lastY] = [p.x, p.y]; }, {passive:false});
-        canvas.addEventListener('touchmove', (e) => {
-            if (!isDrawing) return;
-            e.preventDefault();
-            const p = getPos(e);
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(p.x, p.y);
-            ctx.stroke();
-            [lastX, lastY] = [p.x, p.y];
-        }, {passive:false});
-        window.addEventListener('touchend', () => isDrawing = false);
+        const onEnd = () => isDrawing = false;
 
-        penTool.addEventListener('click', () => { currentMode = 'pen'; penTool.classList.add('active-tool'); eraserTool.classList.remove('active-tool'); updateToolStyles(); });
-        eraserTool.addEventListener('click', () => { currentMode = 'eraser'; eraserTool.classList.add('active-tool'); penTool.classList.remove('active-tool'); updateToolStyles(); });
-        setupBtn.addEventListener('click', () => { parentPanel.classList.toggle('-translate-y-full'); });
-        closeParentBtn.addEventListener('click', () => { parentPanel.classList.add('-translate-y-full'); });
-        clearBtn.addEventListener('click', () => { if(confirm("Vols esborrar tot?")) ctx.clearRect(0, 0, canvas.width, canvas.height); });
+        canvas.addEventListener('mousedown', onStart);
+        canvas.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        canvas.addEventListener('touchstart', onStart, {passive:false});
+        canvas.addEventListener('touchmove', onMove, {passive:false});
+        window.addEventListener('touchend', onEnd);
 
-        correctBtn.addEventListener('click', async () => {
+        penTool.onclick = () => { 
+            currentMode = 'pen'; 
+            penTool.classList.add('active-tool'); 
+            eraserTool.classList.remove('active-tool'); 
+            updateToolStyles(); 
+        };
+        eraserTool.onclick = () => { 
+            currentMode = 'eraser'; 
+            eraserTool.classList.add('active-tool'); 
+            penTool.classList.remove('active-tool'); 
+            updateToolStyles(); 
+        };
+        setupBtn.onclick = () => parentPanel.classList.toggle('-translate-y-full');
+        closeParentBtn.onclick = () => parentPanel.classList.add('-translate-y-full');
+        clearBtn.onclick = () => { 
+            if(confirm("Vols esborrar tota la pissarra per començar de nou?")) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        };
+
+        correctBtn.onclick = async () => {
             const original = originalText.value.trim();
-            if (!original) { parentPanel.classList.remove('-translate-y-full'); return; }
-
-            resultModal.classList.remove('hidden');
+            if (!original) { 
+                parentPanel.classList.remove('-translate-y-full'); 
+                return; 
+            }
+            
+            resultModal.classList.remove('hidden'); 
             resultModal.classList.add('flex');
-            correctionContent.innerHTML = `<div class="flex flex-col items-center py-10 gap-4"><div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div><p class="font-bold text-slate-500">Analitzant dictat...</p></div>`;
+            correctionContent.innerHTML = `
+                <div class="flex flex-col items-center py-12 gap-5 text-slate-500">
+                    <div class="w-14 h-14 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p class="font-bold text-blue-600 animate-pulse uppercase tracking-wider">El mestre està corregint...</p>
+                </div>`;
 
             try {
-                // Crear imagen optimizada para la IA
                 const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvas.width;
-                tempCanvas.height = canvas.height;
+                tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
                 const tCtx = tempCanvas.getContext('2d');
-                tCtx.fillStyle = "#ffffff";
+                tCtx.fillStyle = "#ffffff"; 
                 tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                 tCtx.drawImage(canvas, 0, 0);
-                
                 const imageData = tempCanvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
                 const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
@@ -198,37 +257,49 @@
                     body: JSON.stringify({
                         contents: [{
                             parts: [
-                                { text: `Compara l'escriptura de la imatge amb el text original: "${original}". Transcriu el que veus, corregeix les faltes en català i dóna un consell positiu. Usa negretes.` },
+                                { text: `Ets un mestre de primària català. Analitza l'escriptura a mà de la imatge i compara-la amb el text esperat: "${original}". 
+                                1. Transcriu el que veus escrit.
+                                2. Indica quines faltes d'ortografia o de puntuació hi ha.
+                                3. Dóna un consell pedagògic amable.
+                                Usa negretes per ressaltar correccions. Respon sempre en català.` },
                                 { inlineData: { mimeType: "image/jpeg", data: imageData } }
                             ]
                         }]
                     })
                 });
-
+                
                 const data = await response.json();
-                if (data.error) throw new Error(data.error.message || "Error d'API");
+                if (data.error) throw new Error(data.error.message);
                 
                 const feedback = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                correctionContent.innerHTML = feedback ? formatMarkdown(feedback) : "No s'ha pogut generar la correcció.";
+                correctionContent.innerHTML = feedback 
+                    ? feedback.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>') 
+                    : "S'ha produït un error en analitzar el text.";
             } catch (err) {
-                correctionContent.innerHTML = `<div class="text-red-600 font-bold p-4 bg-red-50 rounded-xl">Error: ${err.message}<br><small class="font-normal opacity-70">Torna-ho a provar en un moment.</small></div>`;
+                correctionContent.innerHTML = `
+                    <div class="p-6 bg-red-50 text-red-700 rounded-2xl border border-red-100">
+                        <strong class="block mb-2 text-xl">Ups! Hi ha hagut un problema</strong>
+                        <p>${err.message}</p>
+                        <p class="mt-4 text-sm opacity-70">Assegura't de tenir connexió a internet.</p>
+                    </div>`;
             }
-        });
+        };
 
-        async function fetchWithRetry(url, options, retries = 5) {
+        async function fetchWithRetry(url, opts, retries = 5) {
             for (let i = 0; i < retries; i++) {
                 try {
-                    const res = await fetch(url, options);
+                    const res = await fetch(url, opts);
                     if (res.ok) return res;
                     if (res.status === 429) await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
-                    else throw new Error("Error de connexió " + res.status);
+                    else throw new Error("Error en el servidor: " + res.status);
                 } catch (e) { if (i === retries - 1) throw e; }
             }
         }
 
-        function formatMarkdown(t) { return t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>'); }
-        [closeModal, closeModalBtn].forEach(b => b.onclick = () => { resultModal.classList.add('hidden'); resultModal.classList.remove('flex'); });
-
+        [closeModal, closeModalBtn].forEach(b => b.onclick = () => { 
+            resultModal.classList.add('hidden'); 
+            resultModal.classList.remove('flex'); 
+        });
     </script>
 </body>
 </html>
