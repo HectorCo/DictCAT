@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DICTCAT - S-Pen Dictats</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="data:application/json;base64,ewogICJnameiOiAiRElDVENBVCIsCiAgInNob3J0X25hbWUiOiAiRElDVENBVCIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvcjogIiNmZmZmZmYiLAogICJ0aGVtZV9jb2xvciI6ICIjMjU2M2ViIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZyZWVwaWsuY29tLzUxMi8zMjA3LzMyMDcwOTIucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXQp9">
+    <style>
+        body { touch-action: none; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        #canvas { touch-action: none; background-image: linear-gradient(#e5e7eb 1px, transparent 1px); background-size: 100% 2.5rem; background-color: #fff; cursor: crosshair; }
+        .hidden-panel { transition: transform 0.3s ease-in-out; }
+        .toolbar-btn { transition: transform 0.1s; }
+        .toolbar-btn:active { transform: scale(0.9); }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans">
+
+    <!-- Header Principal -->
+    <header class="bg-blue-600 text-white p-3 flex justify-between items-center shadow-lg z-20">
+        <div class="flex items-center gap-2">
+            <button id="setupBtn" class="p-2 hover:bg-blue-700 rounded-full toolbar-btn" title="Configurar Dictat">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <h1 class="text-xl font-black tracking-tight">DICTCAT</h1>
+        </div>
+        <div class="flex gap-2">
+            <button id="clearBtn" class="bg-white/20 hover:bg-white/30 px-4 py-1.5 rounded-full text-sm font-bold toolbar-btn uppercase">Netejar</button>
+            <button id="correctBtn" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-5 py-1.5 rounded-full text-sm font-black shadow-md toolbar-btn uppercase">Corregir</button>
+        </div>
+    </header>
+
+    <!-- Panel "Secret" para el Padre -->
+    <div id="parentPanel" class="fixed inset-x-0 top-0 bg-slate-800 text-white p-6 transform -translate-y-full z-10 shadow-2xl transition-transform duration-300">
+        <div class="max-w-2xl mx-auto">
+            <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Text del Dictat (Secret)
+            </h2>
+            <p class="text-slate-400 text-sm mb-4">Escriu aquí el text que li dictaràs. Ella no el veurà mentre escriu.</p>
+            <textarea id="originalText" class="w-full p-4 bg-slate-700 border-none rounded-xl text-lg h-32 focus:ring-2 focus:ring-yellow-400 outline-none text-white" placeholder="Exemple: Avui fa un dia molt bonic..."></textarea>
+            <div class="mt-4 flex justify-end">
+                <button id="closeParentBtn" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-bold transition-colors">Guardar i Tancar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Canvas (Lienzo) de escritura -->
+    <main class="flex-1 relative overflow-hidden bg-white">
+        <canvas id="canvas" class="w-full h-full cursor-pencil"></canvas>
+        <div class="absolute bottom-4 left-4 pointer-events-none opacity-30 flex flex-col items-start">
+            <span class="text-6xl font-black text-slate-200">DICTAT</span>
+            <span class="text-sm font-bold text-slate-400 ml-1 italic">Escriu amb el teu S-Pen</span>
+        </div>
+    </main>
+
+    <!-- Modal de Resultados -->
+    <div id="resultModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden scale-in">
+            <div class="p-6 bg-blue-600 text-white flex justify-between items-center">
+                <h2 class="text-2xl font-black">Resultat</h2>
+                <button id="closeModal" class="text-white/80 hover:text-white text-3xl">&times;</button>
+            </div>
+            <div id="correctionContent" class="p-8 overflow-y-auto text-lg leading-relaxed text-slate-700">
+                <!-- El contenido se inyecta aquí -->
+            </div>
+            <div class="p-6 border-t bg-slate-50 flex justify-center">
+                <button id="closeModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-2xl font-black text-xl shadow-lg toolbar-btn">TANCAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        const apiKey = ""; // Inyectada automáticamente
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const setupBtn = document.getElementById('setupBtn');
+        const parentPanel = document.getElementById('parentPanel');
+        const closeParentBtn = document.getElementById('closeParentBtn');
+        const originalText = document.getElementById('originalText');
+        const clearBtn = document.getElementById('clearBtn');
+        const correctBtn = document.getElementById('correctBtn');
+        const resultModal = document.getElementById('resultModal');
+        const correctionContent = document.getElementById('correctionContent');
+        const closeModal = document.getElementById('closeModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        // --- Configuración Canvas ---
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            // Estilos de trazo
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = '#334155';
+        }
+
+        window.addEventListener('load', resizeCanvas);
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- Lógica de Dibujo ---
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function start(e) {
+            isDrawing = true;
+            const { x, y } = getPos(e);
+            lastX = x;
+            lastY = y;
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            if (e.cancelable) e.preventDefault();
+            const { x, y } = getPos(e);
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            
+            lastX = x;
+            lastY = y;
+        }
+
+        function stop() { isDrawing = false; }
+
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stop);
+
+        canvas.addEventListener('touchstart', start, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        window.addEventListener('touchend', stop);
+
+        // --- Interfaz ---
+        setupBtn.addEventListener('click', () => {
+            parentPanel.classList.toggle('-translate-y-full');
+            parentPanel.classList.toggle('translate-y-0');
+        });
+
+        closeParentBtn.addEventListener('click', () => {
+            parentPanel.classList.add('-translate-y-full');
+            parentPanel.classList.remove('translate-y-0');
+        });
+
+        clearBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // --- Corrección ---
+        correctBtn.addEventListener('click', async () => {
+            const textToCompare = originalText.value.trim();
+            if (!textToCompare) {
+                parentPanel.classList.remove('-translate-y-full');
+                parentPanel.classList.add('translate-y-0');
+                alert("Primer has d'escriure el text que dictaràs en aquest panell.");
+                return;
+            }
+
+            // Mostrar cargando
+            resultModal.classList.remove('hidden');
+            resultModal.classList.add('flex');
+            correctionContent.innerHTML = `
+                <div class="flex flex-col items-center gap-6 py-12">
+                    <div class="w-16 h-16 border-8 border-blue-600 border-t-yellow-400 rounded-full animate-spin"></div>
+                    <p class="text-xl font-bold text-slate-600">Llegint la teva lletra...</p>
+                </div>
+            `;
+
+            try {
+                const imageData = canvas.toDataURL('image/png').split(',')[1];
+                
+                const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: `Ets un mestre de català amable. Analitza la imatge de l'escriptura a mà i compara-la amb el text original: "${textToCompare}". 
+                                         1. Transcriu el que llegeixes de la imatge.
+                                         2. Assenyala els errors ortogràfics, d'accentuació o puntuació.
+                                         3. Explica els errors d'una manera positiva per a una nena.
+                                         Usa negretes per ressaltar paraules clau i emojis. Respon en català.` },
+                                { inlineData: { mimeType: "image/png", data: imageData } }
+                            ]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                const feedback = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (feedback) {
+                    correctionContent.innerHTML = formatFeedback(feedback);
+                } else {
+                    throw new Error("No he pogut llegir el dictat. Intenta que la lletra sigui clara.");
+                }
+
+            } catch (error) {
+                correctionContent.innerHTML = `
+                    <div class="bg-red-50 p-4 rounded-xl text-red-700">
+                        <p class="font-bold">S'ha produït un error:</p>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+
+        async function fetchWithRetry(url, options, retries = 5) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) return response;
+                    if (response.status !== 429) throw new Error("Error en la connexió.");
+                } catch (e) {
+                    if (i === retries - 1) throw e;
+                }
+                await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
+            }
+        }
+
+        function formatFeedback(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-700">$1</strong>')
+                .replace(/\n/g, '<br>')
+                .replace(/(\d\.)/g, '<br><span class="font-bold text-blue-600">$1</span>');
+        }
+
+        [closeModal, closeModalBtn].forEach(btn => {
+            btn.addEventListener('click', () => {
+                resultModal.classList.add('hidden');
+                resultModal.classList.remove('flex');
+            });
+        });
+    </script>
+</body>
+</html>
