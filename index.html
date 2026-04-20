@@ -85,6 +85,25 @@
             background: #1d4ed8;
         }
 
+        .btn-primary.active {
+            background: #1e40af;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-secondary.active {
+            background: #374151;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
         .btn-success {
             background: #10b981;
             color: white;
@@ -234,7 +253,9 @@
         <h1>📝 DICTCAT</h1>
         
         <div class="toolbar">
-            <button class="btn-danger" onclick="borrarCanvas()">🗑️ Esborrar</button>
+            <button id="btnLapiz" class="btn-primary" onclick="seleccionarLapiz()">✏️ Llapis</button>
+            <button id="btnBorrador" class="btn-secondary" onclick="seleccionarBorrador()">🧽 Goma</button>
+            <button class="btn-danger" onclick="borrarCanvas()">🗑️ Esborrar tot</button>
             <button class="btn-success" onclick="corregirDictado()">✅ Corregir</button>
             <button class="btn-warning" onclick="nuevoIntento()">🔄 Nou intent</button>
         </div>
@@ -280,12 +301,39 @@
         let dibujando = false;
         let textoOriginal = '';
         let textoEscrito = '';
+        let herramientaActual = 'lapiz'; // 'lapiz' o 'borrador'
 
         // Configuración del canvas
         ctx.lineWidth = 3;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.strokeStyle = '#1f2937';
+
+        function seleccionarLapiz() {
+            herramientaActual = 'lapiz';
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = '#1f2937';
+            ctx.lineWidth = 3;
+            
+            // Actualizar botones
+            document.getElementById('btnLapiz').classList.add('active');
+            document.getElementById('btnBorrador').classList.remove('active');
+        }
+
+        function seleccionarBorrador() {
+            herramientaActual = 'borrador';
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.lineWidth = 20;
+            
+            // Actualizar botones
+            document.getElementById('btnBorrador').classList.add('active');
+            document.getElementById('btnLapiz').classList.remove('active');
+        }
+
+        // Inicializar con el lápiz seleccionado
+        document.addEventListener('DOMContentLoaded', () => {
+            seleccionarLapiz();
+        });
 
         function ajustarCanvas() {
             const container = canvas.parentElement;
@@ -371,18 +419,18 @@
             
             // Mostrar mensaje de carga
             document.getElementById('resultContainer').classList.add('show');
-            document.getElementById('correccionText').innerHTML = '<p style="text-align:center;">⏳ Comprovant ortografia i gramàtica...</p>';
+            document.getElementById('correccionText').innerHTML = '<p style="text-align:center;">⏳ Comprovant ortografia i gramàtica amb Softcatalà...</p>';
             
             try {
-                // Llamar a la API de LanguageTool para catalán
-                const response = await fetch('https://api.languagetool.org/v2/check', {
+                // Llamar a la API de Softcatalà (LanguageTool en catalán)
+                const response = await fetch('https://languagetool.softcatala.org/v2/check', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     body: new URLSearchParams({
                         'text': textoEscrito,
-                        'language': 'ca', // Catalán
+                        'language': 'ca-ES', // Catalán
                         'enabledOnly': 'false'
                     })
                 });
@@ -428,17 +476,17 @@
                 document.getElementById('errorCount').textContent = errores.length;
                 document.getElementById('accuracy').textContent = precision + '%';
                 document.getElementById('escritoText').textContent = textoEscrito;
-                document.getElementById('correccionText').innerHTML = correccionHTML || '<p style="color: green;">✅ No s\'han trobat errors!</p>';
+                document.getElementById('correccionText').innerHTML = correccionHTML || '<p style="color: green;">✅ No s\'han trobat errors! Molt bé!</p>';
                 
                 // Mostrar lista de errores detallada
                 if (errores.length > 0) {
-                    let listaErrores = '<div style="margin-top: 20px;"><h4>Detall dels errors:</h4><ul style="text-align: left;">';
+                    let listaErrores = '<div style="margin-top: 20px;"><h4>📋 Detall dels errors:</h4><ul style="text-align: left;">';
                     errores.forEach((error, i) => {
                         const textoError = textoEscrito.substring(error.offset, error.offset + error.length);
-                        const sugerencia = error.replacements[0]?.value || 'sense suggerència';
+                        const sugerencia = error.replacements[0]?.value || 'sense suggeriment';
                         listaErrores += `<li><strong>"${textoError}"</strong> → ${error.message}`;
                         if (error.replacements[0]) {
-                            listaErrores += ` (suggeriment: <em>${sugerencia}</em>)`;
+                            listaErrores += ` <span style="color: #10b981;">(Correcte: <em>${sugerencia}</em>)</span>`;
                         }
                         listaErrores += '</li>';
                     });
@@ -451,7 +499,7 @@
 
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('correccionText').innerHTML = '<p style="color: red;">❌ Error en connectar amb el corrector. Comprova la connexió a Internet.</p>';
+                document.getElementById('correccionText').innerHTML = '<p style="color: red;">❌ Error en connectar amb Softcatalà. Comprova la connexió a Internet.</p>';
             }
 
             // Scroll a resultados
@@ -462,6 +510,7 @@
             borrarCanvas();
             textoEscrito = '';
             document.getElementById('resultContainer').classList.remove('show');
+            seleccionarLapiz(); // Volver al lápiz
             alert('Canvas esborrat. Pots començar un nou intent! ✍️');
         }
 
