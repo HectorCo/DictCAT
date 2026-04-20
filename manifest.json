@@ -2,7 +2,7 @@
   "name": "DICTCAT - Dictats en Català",
   "short_name": "DICTCAT",
   "description": "Aplicació per practicar dictats en català amb correcció automàtica",
-  "start_url": "/dictcat.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
