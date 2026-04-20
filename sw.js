@@ -1,6 +1,6 @@
 const CACHE_NAME = 'dictcat-v1';
 const urlsToCache = [
-  '/dictcat.html',
+  '/index.html',
   '/manifest.json'
 ];
 
